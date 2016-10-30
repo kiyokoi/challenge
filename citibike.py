@@ -33,22 +33,26 @@ for files in df_list:
 df['starttime'] = pd.to_datetime(df['starttime'], format='%m/%d/%Y %H:%M:%S')
 df['stoptime'] = pd.to_datetime(df['stoptime'], format='%m/%d/%Y %H:%M:%S')
 #df['diff'] = (df['stoptime'] - df['starttime']) / np.timedelta64(1, 's')
-        
+
 print df['tripduration'].median()   # 629.0
 
 # fraction start end at same station
 
 df['same_station'] = df['start station id'] == df['end station id']
-print df['same_station'][df['same_station'] == True].sum() / float(df.shape[0])     # 0.0223583913373
+print df['same_station'][df['same_station'] == True].sum() / float(df.shape[0])
+    # 0.0223583913373
 
 
 # standard deviation of the number of station visited by a bike
 
-df_renamed = df.rename(columns={'start station id': 'start_station_id', 'end station id': 'end_station_id'}, inplace=True)
-start_stations = pd.DataFrame({'stations':df.groupby('bikeid').start_station_id.apply(list)}).reset_index()
-end_stations = pd.DataFrame({'stations':df.groupby('bikeid').end_station_id.apply(list)}).reset_index()
-print start_stations.shape # (8477, 2)
-print end_stations.shape # (8477, 2)
+df_renamed = df.rename(columns={'start station id': 'start_station_id',
+                                'end station id': 'end_station_id'}, inplace=True)
+start_stations = pd.DataFrame({'stations': df.groupby(
+    'bikeid').start_station_id.apply(list)}).reset_index()
+end_stations = pd.DataFrame({'stations': df.groupby(
+    'bikeid').end_station_id.apply(list)}).reset_index()
+print start_stations.shape  # (8477, 2)
+print end_stations.shape  # (8477, 2)
 
 stations = pd.merge(start_stations, end_stations, on='bikeid')
 stations['stations'] = stations['stations_x'] + stations['stations_y']
@@ -94,6 +98,7 @@ for files in df_list:
 print max(monthly_ave) - min(monthly_ave)  # 430.57029597
 
 '''
+month - monthly average(s)
 11 - 972.175200685
 10 - 1080.14148582
 12 - 946.210875175
@@ -112,8 +117,8 @@ print max(monthly_ave) - min(monthly_ave)  # 430.57029597
 
 df['exceed'] = ((df['usertype'] == 'Customer') & (df['tripduration'] > 1800.0)) | (
     (df['usertype'] == 'Subscriber') & (df['tripduration'] > 2700.0))
-print df['exceed'][df['exceed'] == True].sum() / float(df.shape[0])     # 0.0381067801681
-
+print df['exceed'][df['exceed'] == True].sum() / float(df.shape[0])
+    # 0.0381067801681
 
 
 # average bike move per bike
@@ -124,4 +129,5 @@ dfa['start bikeid'] = dfa['bikeid'].shift(-1)
 
 dfa['removed'] = (dfa['bikeid'] == dfa['start bikeid']) & (
     dfa['end station id'] != dfa['start station id'])
-print dfa['removed'][dfa['removed'] == True].sum() / float(len(dfa['bikeid'].unique()))     # 65.4249144745 per bike
+print dfa['removed'][dfa['removed'] == True].sum() / float(len(dfa['bikeid'].unique()))
+    # 65.4249144745 per bike
