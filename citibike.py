@@ -28,11 +28,12 @@ df_list = [df01, df02, df03, df04, df05,
 for files in df_list:
     df = df.append(files)
 
-# Trip Duration
-
 df['starttime'] = pd.to_datetime(df['starttime'], format='%m/%d/%Y %H:%M:%S')
 df['stoptime'] = pd.to_datetime(df['stoptime'], format='%m/%d/%Y %H:%M:%S')
 #df['diff'] = (df['stoptime'] - df['starttime']) / np.timedelta64(1, 's')
+
+
+# Trip Duration
 
 print df['tripduration'].median()   # 629.0
 
@@ -112,6 +113,40 @@ month - monthly average(s)
 08 - 1017.97768192
 09 - 1051.349442
 '''
+
+# hourly usage fraction
+df['same_hour'] = df['starttime'].dt.hour == df['stoptime'].dt.hour
+df['hour'] = df['starttime'].dt.hour
+total_usage = df['same_hour'][df['same_hour'] ==
+                              True].count()     # total_usage = 7721740 (78%)
+
+by_hour = df.groupby('hour').apply(lambda x: pd.Series(
+    dict(same_hour=(x.same_hour == True).sum())))
+by_hour = pd.DataFrame({'by_hour': by_hour['same_hour']}).reset_index()
+
+by_station = df.groupby('start station id').apply(
+    lambda x: pd.Series(dict(same_hour=(x.same_hour == True).sum())))
+by_station = pd.DataFrame(
+    {'by_station': by_station['same_hour']}).reset_index()
+
+by_station_by_hour = df.groupby(['hour', 'start station id']).apply(
+    lambda x: pd.Series(dict(same_hour=(x.same_hour == True).sum())))
+by_station_by_hour = pd.DataFrame(
+    {'by_station_by_hour': by_station_by_hour['same_hour']}).reset_index()
+
+# left join tables
+joined_df = pd.merge(by_station_by_hour, by_station,
+                     how='left', on='start station id')
+joined_df = pd.merge(joined_df, by_hour, how='left', on='hour')
+
+joined_df['station_frac'] = joined_df[
+    'by_station_by_hour'] / joined_df['by_station']
+joined_df['system_frac'] = joined_df['by_hour'] / total_usage
+joined_df['station_system_ratio'] = joined_df[
+    'station_frac'] / joined_df['system_frac']
+
+print max(joined_df['station_system_ratio'])    # 13.5570592639
+
 
 # fraction exceeded time limit
 
